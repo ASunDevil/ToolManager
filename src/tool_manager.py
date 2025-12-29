@@ -1,6 +1,7 @@
 import inspect
 import json
-from typing import Any, Callable, Dict, List, Optional
+import typing
+from typing import Any, Callable, Dict, List, Optional, Union
 from contextlib import AsyncExitStack
 
 from mcp import types
@@ -26,7 +27,7 @@ class ToolManager:
         name = func.__name__
         description = func.__doc__ or ""
 
-        # Generate schema (simplified)
+        # Generate schema
         sig = inspect.signature(func)
         properties = {}
         required = []
@@ -35,19 +36,8 @@ class ToolManager:
             if param_name == "self":
                 continue
 
-            param_type = "string" # Default
-            if param.annotation == int:
-                param_type = "integer"
-            elif param.annotation == float:
-                param_type = "number"
-            elif param.annotation == bool:
-                param_type = "boolean"
-            elif param.annotation == dict:
-                param_type = "object"
-            elif param.annotation == list:
-                param_type = "array"
+            properties[param_name] = self._get_json_type(param.annotation)
 
-            properties[param_name] = {"type": param_type}
             if param.default == inspect.Parameter.empty:
                 required.append(param_name)
 
@@ -68,6 +58,33 @@ class ToolManager:
             "info": tool_info
         }
         return func
+
+    def _get_json_type(self, annotation: Any) -> Dict[str, Any]:
+        """Converts a Python type annotation to a JSON schema type."""
+        origin = typing.get_origin(annotation)
+        args = typing.get_args(annotation)
+
+        if origin is Union:
+            # Handle Optional (Union[T, None])
+            non_none_types = [t for t in args if t is not type(None)]
+            if len(non_none_types) == 1:
+                return self._get_json_type(non_none_types[0])
+            # For complex unions, just default to string or simple type if possible
+            # Simplified handling for now
+            return {"type": "string"}
+
+        if annotation == int:
+            return {"type": "integer"}
+        elif annotation == float:
+            return {"type": "number"}
+        elif annotation == bool:
+            return {"type": "boolean"}
+        elif annotation == dict or origin is dict or origin is Dict:
+            return {"type": "object"}
+        elif annotation == list or origin is list or origin is List:
+            return {"type": "array"}
+
+        return {"type": "string"}
 
     async def add_mcp_server(self, name: str, command: str, args: List[str], env: Optional[Dict[str, str]] = None):
         """Connects to an MCP server via stdio."""
