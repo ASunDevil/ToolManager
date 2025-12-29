@@ -1,6 +1,7 @@
 from mcp.server.fastmcp import FastMCP
 
-# Initialize FastMCP server
+# Initialize a FastMCP server named "Calculator".
+# FastMCP simplifies creation of MCP servers by using decorators.
 mcp = FastMCP("Calculator")
 
 @mcp.tool()
@@ -19,4 +20,6 @@ def multiply(a: int, b: int) -> int:
     return a * b
 
 if __name__ == "__main__":
+    # Runs the MCP server, listening on stdio by default.
+    # This allows it to be connected to clients (like ToolManager) via subprocess pipes.
     mcp.run()
