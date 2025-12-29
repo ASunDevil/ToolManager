@@ -99,14 +99,15 @@ def buildkite_list_builds(
     # Or just slice the result. Pagination defaults to 100.
 
     # Let's stick to default client and slice, as 'limit' is usually small.
-    # But if limit > 100, we might need paging. For now, assume limit <= 100 or API default.
+    # We request page=1 to ensure we don't fetch all history if the library auto-paginates.
 
     builds = bk.builds().list_all_for_pipeline(
         organization=organization,
         pipeline=pipeline,
         states=states or [],
-        branch=branch
+        branch=branch,
+        page=1
     )
 
-    # API might return more, slice it.
+    # API might return more (up to 100 by default), slice it.
     return builds[:limit]

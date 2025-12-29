@@ -13,6 +13,9 @@ from mcp.client.session import ClientSession
 from src.std_tools import execute_shell_command
 from src.buildkite_tools import buildkite_trigger_build, buildkite_get_build_status, buildkite_list_builds
 
+import sys
+import os
+
 class ToolManager:
     def __init__(self):
         self._local_tools: Dict[str, Dict[str, Any]] = {}
@@ -27,6 +30,23 @@ class ToolManager:
         self.register_tool(buildkite_list_builds)
 
     async def __aenter__(self):
+        # Start and connect to the internal Calculator MCP server
+        try:
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            server_script = os.path.join(current_dir, "mcp_server.py")
+
+            if os.path.exists(server_script):
+                await self.add_mcp_server(
+                    name="calculator",
+                    command=sys.executable,
+                    args=[server_script],
+                    env=os.environ.copy()
+                )
+            else:
+                print(f"Warning: Internal MCP server script not found at {server_script}")
+        except Exception as e:
+            print(f"Error starting internal MCP server: {e}")
+
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
