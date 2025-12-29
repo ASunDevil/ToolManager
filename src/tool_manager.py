@@ -145,7 +145,13 @@ class ToolManager:
         if name in self._local_tools:
             func = self._local_tools[name]["func"]
             try:
-                result = func(**kwargs)
+                import asyncio
+                if inspect.iscoroutinefunction(func):
+                    result = await func(**kwargs)
+                else:
+                    # Run sync functions in a thread to avoid blocking the loop
+                    result = await asyncio.to_thread(func, **kwargs)
+
                 content = types.TextContent(type="text", text=str(result))
                 return types.CallToolResult(content=[content], isError=False).model_dump()
             except Exception as e:
