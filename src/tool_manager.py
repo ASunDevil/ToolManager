@@ -9,12 +9,22 @@ from mcp.client.stdio import stdio_client, StdioServerParameters
 from mcp.client.sse import sse_client
 from mcp.client.session import ClientSession
 
+# Import standard and buildkite tools
+from src.std_tools import execute_shell_command
+from src.buildkite_tools import buildkite_trigger_build, buildkite_get_build_status, buildkite_list_builds
+
 class ToolManager:
     def __init__(self):
         self._local_tools: Dict[str, Dict[str, Any]] = {}
         self._mcp_sessions: Dict[str, ClientSession] = {}
         self._tool_to_session: Dict[str, str] = {} # tool_name -> session_name
         self._exit_stack = AsyncExitStack()
+
+        # Register default tools
+        self.register_tool(execute_shell_command)
+        self.register_tool(buildkite_trigger_build)
+        self.register_tool(buildkite_get_build_status)
+        self.register_tool(buildkite_list_builds)
 
     async def __aenter__(self):
         return self

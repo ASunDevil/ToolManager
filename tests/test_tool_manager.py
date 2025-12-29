@@ -12,11 +12,14 @@ async def test_local_tool_registration():
         return a + b
 
     tools = await tm.list_tools()
-    assert len(tools) == 1
-    assert tools[0]["name"] == "add"
-    assert tools[0]["description"] == "Adds two numbers."
-    assert "a" in tools[0]["inputSchema"]["properties"]
-    assert "b" in tools[0]["inputSchema"]["properties"]
+    # assert len(tools) == 1 # Now we have default tools
+
+    # Check if 'add' is present
+    add_tool = next((t for t in tools if t["name"] == "add"), None)
+    assert add_tool is not None
+    assert add_tool["description"] == "Adds two numbers."
+    assert "a" in add_tool["inputSchema"]["properties"]
+    assert "b" in add_tool["inputSchema"]["properties"]
 
     result = await tm.call_tool("add", a=1, b=2)
     assert result["content"][0]["text"] == "3"
