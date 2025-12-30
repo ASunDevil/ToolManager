@@ -58,6 +58,18 @@ class ToolManager:
         except Exception as e:
             print(f"Error starting internal MCP server: {e}")
 
+        # Add GitHub MCP server if token is present
+        try:
+            if "GITHUB_PERSONAL_ACCESS_TOKEN" in os.environ:
+                await self.add_mcp_server(
+                    name="github",
+                    command="docker",
+                    args=["run", "-i", "--rm", "-e", "GITHUB_PERSONAL_ACCESS_TOKEN", "ghcr.io/github/github-mcp-server"],
+                    env=os.environ.copy()
+                )
+        except Exception as e:
+            print(f"Error starting GitHub MCP server: {e}")
+
         return self
 
     async def __aexit__(self, exc_type, exc_value, traceback):
